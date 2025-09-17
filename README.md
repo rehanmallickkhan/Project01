@@ -41,8 +41,7 @@ HTML5 + Canvas
 
 Clone the repo:
 
-git clone https://github.com/yourusername/phaser-2d-shooter.git
-cd phaser-2d-shooter
+git clone https://github.com/rehanmallickkhan/Project01
 
 Open index.html in your browser.
 
