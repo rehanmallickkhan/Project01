@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D Shooter Game - Phaser</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+</head>
+<body>
+<script>
+const config = {
+  type: Phaser.AUTO,
+  width: 480,
+  height: 640,
+  physics: {
+    default: "arcade",
+    arcade: { debug: false }
+  },
+  scene: { preload, create, update }
+};
+
+let player, cursors, bullets, enemies, score = 0, scoreText, lastFired = 0;
+
+function preload() {
+  this.load.image("background", "https://labs.phaser.io/assets/skies/deep-space.jpg");
+  this.load.image("ship", "https://labs.phaser.io/assets/sprites/player.png");
+  this.load.image("bullet", "https://labs.phaser.io/assets/sprites/bullets/bullet11.png");
+  this.load.image("enemy", "https://labs.phaser.io/assets/sprites/ufo.png");
+}
+
+function create() {
+  // Background
+  this.add.image(240, 320, "background").setScale(1.2);
+
+  // Player
+  player = this.physics.add.sprite(240, 550, "ship").setCollideWorldBounds(true);
+
+  // Bullets
+  bullets = this.physics.add.group({ classType: Phaser.Physics.Arcade.Image });
+  
+  // Enemies
+  enemies = this.physics.add.group();
+  this.time.addEvent({
+    delay: 1000,
+    callback: spawnEnemy,
+    callbackScope: this,
+    loop: true
+  });
+
+  // Controls
+  cursors = this.input.keyboard.createCursorKeys();
+  this.input.keyboard.on("keydown-SPACE", shoot, this);
+  this.input.on("pointerdown", shoot, this);
+
+  // Score text
+  scoreText = this.add.text(10, 10, "Score: 0", { fontSize: "24px", fill: "#fff" });
+
+  // Collisions
+  this.physics.add.collider(bullets, enemies, hitEnemy, null, this);
+  this.physics.add.collider(player, enemies, gameOver, null, this);
+}
+
+function update(time) {
+  // Player movement
+  player.setVelocity(0);
+  if (cursors.left.isDown) player.setVelocityX(-200);
+  if (cursors.right.isDown) player.setVelocityX(200);
+  if (cursors.up.isDown) player.setVelocityY(-200);
+  if (cursors.down.isDown) player.setVelocityY(200);
+
+  // Auto-fire with hold space
+  if (cursors.space.isDown && time > lastFired) {
+    shoot.call(this);
+    lastFired = time + 250; // fire rate
+  }
+}
+
+function shoot() {
+  const bullet = bullets.get(player.x, player.y - 20, "bullet");
+  if (bullet) {
+    bullet.setActive(true).setVisible(true);
+    bullet.body.allowGravity = false;
+    bullet.setVelocityY(-300);
+  }
+}
+
+function spawnEnemy() {
+  const x = Phaser.Math.Between(50, 430);
+  const enemy = enemies.create(x, 0, "enemy");
+  enemy.setVelocityY(100);
+}
+
+function hitEnemy(bullet, enemy) {
+  bullet.destroy();
+  enemy.destroy();
+  score += 10;
+  scoreText.setText("Score: " + score);
+}
+
+function gameOver(player, enemy) {
+  this.physics.pause();
+  player.setTint(0xff0000);
+  scoreText.setText("Game Over! Final Score: " + score);
+}
+
+new Phaser.Game(config);
+</script>
+</body>
+</html>
